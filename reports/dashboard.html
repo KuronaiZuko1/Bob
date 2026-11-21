@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI PC Optimizer Dashboard - PC-002</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --border: #334155;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --accent: #38bdf8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background: var(--bg); color: var(--text-main); padding: 2rem; line-height: 1.5; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2rem; }
+        .brand h1 { font-size: 1.75rem; font-weight: 700; color: var(--accent); }
+        .brand p { color: var(--text-sub); font-size: 0.9rem; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+        .card-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-sub); margin-bottom: 0.5rem; }
+        .card-value { font-size: 2.25rem; font-weight: 800; }
+        .card-sub { font-size: 0.85rem; color: var(--text-sub); margin-top: 0.5rem; }
+        .progress-bar-bg { width: 100%; height: 8px; background: #334155; border-radius: 4px; overflow: hidden; margin-top: 0.75rem; }
+        .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+        .section-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-main); }
+        table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+        th, td { text-align: left; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        th { color: var(--text-sub); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
+        tr:hover { background: rgba(255, 255, 255, 0.02); }
+        .tag { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+        .tag-critical { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+        .tag-warning { background: rgba(245, 158, 11, 0.2); color: #fde68a; }
+        .tag-safe { background: rgba(16, 185, 129, 0.2); color: #a7f3d0; }
+        .action-banner { background: linear-gradient(135deg, #1e3a8a, #0369a1); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
+        .action-banner h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+        .action-banner p { font-size: 0.95rem; opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="brand">
+                <h1>⚡ AI PC Optimizer Dashboard</h1>
+                <p>Host: PC-002 &bull; OS: Microsoft Windows 10 Pro &bull; Generated: 2026-11-01 13:20</p>
+            </div>
+            <div>
+                <span class="tag" style="background: #ef4444; color: #fff; font-size: 1rem; padding: 0.5rem 1rem;">
+                    Score: 57/100 (Poor (System Bottlenecks Present))
+                </span>
+            </div>
+        </header>
+
+        <div class="action-banner">
+            <h3>🤖 AI Diagnostic Summary</h3>
+            <p>PC Health Assessment: Poor (System Bottlenecks Present) (Score: 57/100).
+- Memory: 3.65 GB used out of 3.88 GB (94.1%).
+- Storage Bloat: Approximately 2.86 GB of recoverable junk and caches detected across temp directories and update caches.
+- Startup items: 10 background boot applications active.
+Recommended Action: Execute prioritized cleanup and memory trim to reclaim responsiveness and disk space.</p>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="card">
+                <div class="card-title">Memory (RAM) Usage</div>
+                <div class="card-value" style="color: var(--danger);">
+                    94.1%
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" style="width: 94.1%; background: var(--danger);"></div>
+                </div>
+                <div class="card-sub">3.65 GB used of 3.88 GB (0.23 GB free)</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Recoverable Bloat</div>
+                <div class="card-value" style="color: var(--warning);">
+                    2.86 GB
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" style="width: 59%; background: var(--warning);"></div>
+                </div>
+                <div class="card-sub">Temp files, update leftovers & caches</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Active Startup Items</div>
+                <div class="card-value">10</div>
+                <div class="card-sub">Registry & user startup services</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Processor Info</div>
+                <div class="card-value" style="font-size: 1.5rem; padding-top: 0.5rem;">2 Cores</div>
+                <div class="card-sub">Intel(R) Core(TM) i3-2120 CPU @ 3.30GHz</div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 2rem;">
+            <div class="section-title">⚠️ Identified Optimization Actions</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Action</th>
+                        <th>Category</th>
+                        <th>Benefit</th>
+                        <th>Risk Level</th>
+                    </tr>
+                </thead>
+                <tbody>                    <tr>
+                        <td><strong>Trim Idle Process Working Sets</strong></td>
+                        <td>Memory</td>
+                        <td>Reclaims idle memory pages back into the free physical RAM pool</td>
+                        <td><span class="tag tag-safe">Safe</span></td>
+                    </tr>                    <tr>
+                        <td><strong>Clean User Temporary Files (1688.11 MB)</strong></td>
+                        <td>Storage</td>
+                        <td>Frees up 1688.11 MB of stale temp files from $env:TEMP</td>
+                        <td><span class="tag tag-safe">Safe</span></td>
+                    </tr>                    <tr>
+                        <td><strong>Clean Windows Update Download Cache (1230.07 MB)</strong></td>
+                        <td>Storage</td>
+                        <td>Removes old downloaded installation packages from past updates</td>
+                        <td><span class="tag tag-safe">Safe</span></td>
+                    </tr>                    <tr>
+                        <td><strong>Execute SSD TRIM & Storage Optimization</strong></td>
+                        <td>Storage</td>
+                        <td>Issues TRIM command to SSD blocks to restore read/write performance</td>
+                        <td><span class="tag tag-safe">Safe</span></td>
+                    </tr>                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <div class="section-title">📈 Top Memory Consuming Processes</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>PID</th>
+                        <th>Process</th>
+                        <th>Working Set (RAM)</th>
+                        <th>CPU Time</th>
+                    </tr>
+                </thead>
+                <tbody>                    <tr>
+                        <td>9636</td>
+                        <td><strong>msedge</strong></td>
+                        <td>407.7 MB</td>
+                        <td>175.8 s</td>
+                    </tr>                    <tr>
+                        <td>1108</td>
+                        <td><strong>pwsh</strong></td>
+                        <td>247.3 MB</td>
+                        <td>536.9 s</td>
+                    </tr>                    <tr>
+                        <td>4540</td>
+                        <td><strong>MsMpEng</strong></td>
+                        <td>180.3 MB</td>
+                        <td>0 s</td>
+                    </tr>                    <tr>
+                        <td>9620</td>
+                        <td><strong>Antigravity</strong></td>
+                        <td>158.4 MB</td>
+                        <td>37.9 s</td>
+                    </tr>                    <tr>
+                        <td>10336</td>
+                        <td><strong>SearchApp</strong></td>
+                        <td>152.7 MB</td>
+                        <td>37.4 s</td>
+                    </tr>                    <tr>
+                        <td>8852</td>
+                        <td><strong>msedge</strong></td>
+                        <td>120.6 MB</td>
+                        <td>569.6 s</td>
+                    </tr>                    <tr>
+                        <td>9204</td>
+                        <td><strong>OneDrive</strong></td>
+                        <td>119.4 MB</td>
+                        <td>143 s</td>
+                    </tr>                    <tr>
+                        <td>8076</td>
+                        <td><strong>explorer</strong></td>
+                        <td>118 MB</td>
+                        <td>497.8 s</td>
+                    </tr>                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
