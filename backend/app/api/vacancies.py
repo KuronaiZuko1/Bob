@@ -139,3 +139,56 @@ async def evaluate_vacancy(vacancy_id: int, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(vacancy)
     return vacancy
+
+
+@router.post("", response_model=VacancyOut)
+async def create_vacancy(data: VacancyCreate, db: Session = Depends(get_db)):
+    """
+    Manually add or import a real job vacancy.
+    Automatically fingerprints, deduplicates, and runs AI eligibility analysis.
+    """
+    import hashlib
+
+    # Generate fingerprint if not provided
+    fp = data.vacancy_fingerprint
+    if not fp:
+        raw_key = f"{data.title.lower().strip()}|{data.employer.lower().strip()}|{(data.reference_number or '').lower()}"
+        fp = hashlib.sha256(raw_key.encode()).hexdigest()
+
+    # Check for existing duplicate
+    existing = db.query(Vacancy).filter(
+        (Vacancy.vacancy_fingerprint == fp) |
+        ((Vacancy.source_url == data.source_url) & (Vacancy.source_url != "Manual Entry"))
+    ).first()
+    if existing:
+        return existing
+
+    dump = data.model_dump()
+    dump["vacancy_fingerprint"] = fp
+    if not dump.get("source_url"):
+        dump["source_url"] = "Manual Entry"
+
+    vac = Vacancy(**dump)
+    db.add(vac)
+    db.commit()
+    db.refresh(vac)
+
+    # Immediately evaluate eligibility
+    try:
+        await evaluate_vacancy(vac.id, db)
+        db.refresh(vac)
+    except Exception:
+        pass
+
+    return vac
+
+
+@router.delete("/{vacancy_id}")
+def delete_vacancy(vacancy_id: int, db: Session = Depends(get_db)):
+    """Delete a vacancy from the database."""
+    vac = db.query(Vacancy).filter(Vacancy.id == vacancy_id).first()
+    if not vac:
+        raise HTTPException(status_code=404, detail="Vacancy not found")
+    db.delete(vac)
+    db.commit()
+    return {"message": "Vacancy deleted successfully"}

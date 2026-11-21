@@ -1,13 +1,21 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState, useEffect } from 'react'
+import { useSettings } from '../hooks/useApi'
 import { ToastContext } from '../App'
 import client from '../api/client'
 
 export default function TelegramSettings() {
+  const { data, refetch } = useSettings()
   const addToast = useContext(ToastContext)
   const [status, setStatus]   = useState(null)
   const [loading, setLoading] = useState(false)
   const [token, setToken]     = useState('')
   const [userId, setUserId]   = useState('')
+
+  useEffect(() => {
+    if (data?.telegram_allowed_user_id) {
+      setUserId(String(data.telegram_allowed_user_id))
+    }
+  }, [data])
 
   async function saveAndTest() {
     if (!token.trim()) { addToast('Enter a bot token first', 'warning'); return }
@@ -18,20 +26,23 @@ export default function TelegramSettings() {
       if (res.data?.ok) {
         setStatus({ msg: `✓ Telegram connected. Bot: @${res.data.bot_username}`, ok: true })
         addToast('Telegram connected!', 'success')
+        refetch()
       } else {
         setStatus({ msg: `Bot responded but reported an error: ${res.data?.description}`, ok: false })
       }
     } catch (e) {
       setStatus({ msg: e.message, ok: false })
-    } finally { setLoading(false) }
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <div className="page-scroll">
       <div className="section-header">
         <div>
-          <div className="section-title">Telegram Notifications</div>
-          <div className="section-subtitle">BOB notifies you via Telegram and accepts commands from your Telegram account</div>
+          <div className="section-title">Telegram Notifications &amp; Commands</div>
+          <div className="section-subtitle">BOB sends live notifications to your Telegram and accepts remote control commands</div>
         </div>
       </div>
 
@@ -43,49 +54,56 @@ export default function TelegramSettings() {
 
         <div className="form-group">
           <label className="form-label">Bot Token</label>
-          <input className="form-input" type="password" value={token} onChange={e => setToken(e.target.value)} placeholder="123456:ABC-DEF…" style={{ maxWidth: 400 }} />
-          <div className="form-hint">Get this from @BotFather on Telegram</div>
+          <input className="form-input" type="password" value={token} onChange={e => setToken(e.target.value)} placeholder="123456:ABC-DEF…" style={{ maxWidth: 440 }} />
+          <div className="form-hint">Obtain from @BotFather on Telegram</div>
         </div>
 
         <div className="form-group">
           <label className="form-label">Your Telegram User ID</label>
-          <input className="form-input" value={userId} onChange={e => setUserId(e.target.value)} placeholder="1234567890" style={{ maxWidth: 200 }} />
+          <input className="form-input" value={userId} onChange={e => setUserId(e.target.value)} placeholder="e.g. 1916380095" style={{ maxWidth: 220 }} />
           <div className="form-hint">Get your user ID by messaging @userinfobot on Telegram</div>
         </div>
 
         {status && (
-          <div style={{ marginBottom: 'var(--space-4)', padding: 'var(--space-3)', borderRadius: 'var(--radius-md)', background: status.ok ? 'var(--success-subtle)' : 'var(--danger-subtle)', color: status.ok ? 'var(--success)' : 'var(--danger)', fontSize: 'var(--font-size-sm)' }}>
+          <div style={{
+            marginBottom: 'var(--space-4)', padding: 'var(--space-3)',
+            borderRadius: 'var(--radius-md)',
+            background: status.ok ? 'var(--success-subtle)' : 'var(--danger-subtle)',
+            color: status.ok ? 'var(--success)' : 'var(--danger)',
+            fontSize: 'var(--font-size-sm)'
+          }}>
             {status.msg}
           </div>
         )}
 
-        <button className="btn btn-primary" onClick={saveAndTest} disabled={loading}>{loading ? 'Connecting…' : 'Save & Test Connection'}</button>
+        <button className="btn btn-primary" onClick={saveAndTest} disabled={loading}>
+          {loading ? 'Connecting & Verifying…' : 'Save & Test Connection'}
+        </button>
       </div>
 
       <div className="card">
-        <div className="card-title">Telegram Commands BOB Supports</div>
+        <div className="card-title">Supported Remote Telegram Commands</div>
         <table className="data-table">
-          <thead><tr><th>Command</th><th>Description</th></tr></thead>
+          <thead><tr><th>Command</th><th>Action</th></tr></thead>
           <tbody>
             {[
-              ['/status',   'Get a live summary of BOB\'s current activity'],
-              ['/stats',    'View today\'s application statistics'],
-              ['/pause',    'Pause all automatic applications'],
-              ['/resume',   'Resume automatic applications'],
-              ['/vacancies','List today\'s discovered vacancies'],
-              ['/applied',  'List today\'s submitted applications'],
-              ['/report',   'Generate a detailed daily report'],
-              ['/help',     'Show all available commands'],
+              ['/status',   'Check live operational status of BOB'],
+              ['/stats',    'View application counts and discovery statistics'],
+              ['/pause',    'Pause all automatic job applications remotely'],
+              ['/resume',   'Resume background applications and scanning'],
+              ['/vacancies','List today\'s top eligible South African vacancies'],
+              ['/applied',  'List your latest submitted applications'],
+              ['/help',     'Display the command cheat-sheet'],
             ].map(([cmd, desc]) => (
               <tr key={cmd}>
-                <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)', fontSize: 'var(--font-size-sm)' }}>{cmd}</td>
+                <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)', fontSize: 'var(--font-size-sm)', fontWeight: 600 }}>{cmd}</td>
                 <td>{desc}</td>
               </tr>
             ))}
           </tbody>
         </table>
         <div style={{ marginTop: 'var(--space-3)', fontSize: 'var(--font-size-xs)', color: 'var(--text-muted)' }}>
-          🔒 BOB only responds to commands from your configured Telegram User ID. All other messages are ignored.
+          🔒 <strong>Privacy Shield:</strong> BOB masks all South African ID numbers and never reveals confidential document secrets in Telegram messages.
         </div>
       </div>
     </div>

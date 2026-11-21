@@ -35,11 +35,11 @@ class VacancyBase(BaseModel):
     closing_date: Optional[str] = None
     reference_number: Optional[str] = None
     description: str
-    source_url: str
+    source_url: Optional[str] = "Manual Entry"
 
 
 class VacancyCreate(VacancyBase):
-    vacancy_fingerprint: str
+    vacancy_fingerprint: Optional[str] = None
 
 
 class VacancyOut(VacancyBase):

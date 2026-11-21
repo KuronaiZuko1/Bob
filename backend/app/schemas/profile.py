@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, computed_field
 from typing import List, Optional
 from datetime import datetime
 
@@ -24,6 +24,16 @@ class QualificationOut(QualificationBase):
     id: int
     profile_id: int
 
+    @computed_field
+    @property
+    def name(self) -> str:
+        return self.qualification_name
+
+    @computed_field
+    @property
+    def year_obtained(self) -> Optional[str]:
+        return self.end_year
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -41,6 +51,11 @@ class SkillCreate(SkillBase):
 class SkillOut(SkillBase):
     id: int
     profile_id: int
+
+    @computed_field
+    @property
+    def proficiency_level(self) -> str:
+        return self.proficiency
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -63,6 +78,11 @@ class ExperienceCreate(ExperienceBase):
 class ExperienceOut(ExperienceBase):
     id: int
     profile_id: int
+
+    @computed_field
+    @property
+    def description(self) -> Optional[str]:
+        return self.responsibilities
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -107,12 +127,16 @@ class ProfileCreate(ProfileBase):
 
 class ProfileUpdate(BaseModel):
     full_legal_name: Optional[str] = None
+    full_name: Optional[str] = None
     id_number: Optional[str] = None
     phone_number: Optional[str] = None
+    phone: Optional[str] = None
     email: Optional[str] = None
     residential_address: Optional[str] = None
+    address: Optional[str] = None
     province: Optional[str] = None
     town_city: Optional[str] = None
+    city: Optional[str] = None
     drivers_licence: Optional[str] = None
     has_own_transport: Optional[bool] = None
     languages: Optional[str] = None
@@ -129,5 +153,25 @@ class ProfileOut(ProfileBase):
     skills: List[SkillOut] = []
     experiences: List[ExperienceOut] = []
     references: List[ReferenceOut] = []
+
+    @computed_field
+    @property
+    def full_name(self) -> str:
+        return self.full_legal_name
+
+    @computed_field
+    @property
+    def phone(self) -> Optional[str]:
+        return self.phone_number
+
+    @computed_field
+    @property
+    def city(self) -> Optional[str]:
+        return self.town_city
+
+    @computed_field
+    @property
+    def address(self) -> Optional[str]:
+        return self.residential_address
 
     model_config = ConfigDict(from_attributes=True)

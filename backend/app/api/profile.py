@@ -88,8 +88,22 @@ def get_profile(db: Session = Depends(get_db)):
 def update_profile(data: ProfileUpdate, db: Session = Depends(get_db)):
     """Update profile information."""
     profile = get_or_create_initial_profile(db)
-    for field, value in data.model_dump(exclude_unset=True).items():
-        setattr(profile, field, value)
+    dump = data.model_dump(exclude_unset=True)
+
+    # Normalize alias field names
+    if "full_name" in dump and dump["full_name"] is not None:
+        profile.full_legal_name = dump.pop("full_name")
+    if "phone" in dump and dump["phone"] is not None:
+        profile.phone_number = dump.pop("phone")
+    if "city" in dump and dump["city"] is not None:
+        profile.town_city = dump.pop("city")
+    if "address" in dump and dump["address"] is not None:
+        profile.residential_address = dump.pop("address")
+
+    for field, value in dump.items():
+        if hasattr(profile, field) and value is not None:
+            setattr(profile, field, value)
+
     db.commit()
     db.refresh(profile)
     return profile

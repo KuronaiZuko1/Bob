@@ -13,12 +13,14 @@ from datetime import datetime, timezone
 
 from backend.app.core.database import get_db
 from backend.app.core.config import settings
-from backend.app.models.application import Application, ApplicationLog, EmailSubmission
+from backend.app.models.application import Application, ApplicationLog, EmailSubmission, WebsiteSubmission
 from backend.app.models.profile import Profile
 from backend.app.models.vacancy import Vacancy
 from backend.app.schemas.application import ApplicationOut
 from backend.app.services.document_generator import generate_tailored_cv, generate_tailored_cover_letter
 from backend.app.services.gmail_service import send_application_email
+from backend.app.services.website_applicator import apply_via_website
+from backend.app.services.telegram_bot import send_telegram_notification
 
 router = APIRouter(prefix="/applications", tags=["Applications"])
 
@@ -173,6 +175,100 @@ def download_cover_letter(application_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail=f"Cover letter file not found at path: {cl_path}")
 
     return FileResponse(cl_path, media_type="application/pdf", filename=Path(cl_path).name)
+
+
+@router.post("/{application_id}/submit", response_model=ApplicationOut)
+async def submit_application(application_id: int, db: Session = Depends(get_db)):
+    """
+    Dispatch an application via Email (Gmail API) or Web Portal (Playwright).
+    Respects TEST_MODE setting and records complete audit logs and evidence.
+    """
+    app_record = db.query(Application).filter(Application.id == application_id).first()
+    if not app_record:
+        raise HTTPException(status_code=404, detail="Application record not found")
+
+    profile = db.query(Profile).filter(Profile.id == app_record.profile_id).first() or db.query(Profile).first()
+    vacancy = db.query(Vacancy).filter(Vacancy.id == app_record.vacancy_id).first()
+    if not vacancy:
+        raise HTTPException(status_code=404, detail="Associated vacancy not found")
+
+    # If documents not generated yet, generate them first
+    if not app_record.tailored_cv_path or not Path(app_record.tailored_cv_path).exists():
+        docx_path, pdf_path = generate_tailored_cv(profile, vacancy)
+        cl_path = generate_tailored_cover_letter(profile, vacancy)
+        app_record.tailored_cv_path = pdf_path
+        app_record.cover_letter_path = cl_path
+
+    # Dispatch based on application method
+    method = (app_record.application_method or vacancy.application_method or "email").lower()
+    submission_success = False
+
+    if method == "email" or vacancy.application_email:
+        res = send_application_email(profile, vacancy, app_record)
+        app_record.status = res.get("status", "SUBMITTED")
+        app_record.submitted_at = datetime.now(timezone.utc)
+        sub_record = db.query(EmailSubmission).filter(EmailSubmission.application_id == app_record.id).first()
+        if not sub_record:
+            sub_record = EmailSubmission(
+                application_id=app_record.id,
+                recipient_email=vacancy.application_email or "careers@example.co.za",
+                subject=res.get("subject", f"Application for {vacancy.title}"),
+                gmail_message_id=res.get("message_id"),
+                status=res.get("status", "SENT")
+            )
+            db.add(sub_record)
+        else:
+            sub_record.gmail_message_id = res.get("message_id")
+            sub_record.status = res.get("status", "SENT")
+        submission_success = True
+        log_msg = f"Email application dispatched to {vacancy.application_email} (Result: {res.get('status')})"
+
+    elif method == "website" or vacancy.application_url:
+        res = await apply_via_website(profile, vacancy, app_record)
+        app_record.status = res.get("status", "SUBMITTED")
+        app_record.submitted_at = datetime.now(timezone.utc)
+        web_record = db.query(WebsiteSubmission).filter(WebsiteSubmission.application_id == app_record.id).first()
+        if not web_record:
+            web_record = WebsiteSubmission(
+                application_id=app_record.id,
+                portal_url=res.get("portal_url", vacancy.application_url or vacancy.source_url),
+                submission_reference=res.get("submission_reference"),
+                screenshot_path=res.get("screenshot_path"),
+                status=res.get("status", "SUBMITTED")
+            )
+            db.add(web_record)
+        else:
+            web_record.submission_reference = res.get("submission_reference")
+            web_record.screenshot_path = res.get("screenshot_path")
+            web_record.status = res.get("status", "SUBMITTED")
+        submission_success = (res.get("status") in ["SUBMITTED", "SUBMITTED_TEST_MODE"])
+        log_msg = f"Website application submitted to {web_record.portal_url} (Ref: {res.get('submission_reference')})"
+
+    else:
+        app_record.status = "REQUIRES_ATTENTION"
+        log_msg = "Application has no known email or portal URL."
+
+    # Record log entry
+    db.add(ApplicationLog(
+        application_id=app_record.id,
+        level="INFO" if submission_success else "WARNING",
+        message=log_msg
+    ))
+    db.commit()
+    db.refresh(app_record)
+
+    # Notify via Telegram
+    try:
+        tg_text = (
+            f"📬 <b>Application Update:</b> {vacancy.title} at {vacancy.employer}\n"
+            f"Status: <b>{app_record.status}</b> via {method.upper()}\n"
+            f"Mode: {'Test Mode (Simulated)' if settings.TEST_MODE else 'Live'}"
+        )
+        await send_telegram_notification(tg_text)
+    except Exception:
+        pass
+
+    return app_record
 
 
 @router.delete("/{application_id}")

@@ -187,17 +187,21 @@ async def lifespan(app: FastAPI):
     storage_dir = Path(settings.DOCUMENT_STORAGE_PATH)
     storage_dir.mkdir(parents=True, exist_ok=True)
 
-    # Initialize profile and seed initial data
+    # Initialize profile if needed
     db = SessionLocal()
     try:
         get_or_create_initial_profile(db)
-        seed_sample_data(db)
     finally:
         db.close()
 
+    # Start background scheduler
+    from backend.app.services.scheduler import start_scheduler, shutdown_scheduler
+    start_scheduler()
+
     yield
 
-    # Shutdown logic (if any)
+    # Graceful shutdown of background workers
+    shutdown_scheduler()
 
 
 app = FastAPI(
